@@ -1,1 +1,67 @@
-äjhÆ€-≠Ê¶ñ+Z≤Àböö+∂ñßu´≤óböö+∂{¶ß&¨ûò¶¶äÌ¢
+import streamlit as st
+from PIL import Image
+from utils.gemini_utils import get_gemini_response
+from utils.tts_utils import text_to_speech
+
+# Configura√ß√£o da p√°gina (opcional, mas bom para UX)
+st.set_page_config(page_title="Analisador de Imagens DL", layout="wide")
+
+# --- Fun√ß√µes Auxiliares (L√≥gica de Neg√≥cio/Controladores) ---
+def handle_image_analysis(image_file):
+    """
+    Processa a imagem, obt√©m a an√°lise do Gemini e o √°udio.
+    """
+    if image_file is not None:
+        try:
+            image = Image.open(image_file)
+            st.image(image, caption="Imagem Carregada", use_column_width=True)
+            
+            # Bot√£o para iniciar a an√°lise s√≥ aparece depois do upload
+            if st.button("Analisar Imagem"):
+                with st.spinner("Analisando a imagem... Por favor, aguarde."):
+                    # Obter descri√ß√£o da imagem do Gemini
+                    description = get_gemini_response(image)
+                    
+                    if description:
+                        st.subheader("Descri√ß√£o da Imagem:")
+                        st.markdown(description)
+                        
+                        # Gerar e exibir √°udio da descri√ß√£o
+                        audio_bytes = text_to_speech(description)
+                        if audio_bytes:
+                            st.audio(audio_bytes, format="audio/mp3")
+                        else:
+                            st.error("N√£o foi poss√≠vel gerar o √°udio da descri√ß√£o.")
+                    else:
+                        st.error("N√£o foi poss√≠vel obter a descri√ß√£o da imagem.")
+        except Exception as e:
+            st.error(f"Erro ao processar a imagem: {e}")
+    else:
+        st.info("Por favor, carregue um arquivo de imagem para an√°lise.")
+
+# --- Interface do Usu√°rio (Componentes Visuais) ---
+st.title("üñºÔ∏è Analisador de Imagens com Deep Learning")
+st.markdown("""
+Bem-vindo ao Analisador de Imagens! Fa√ßa o upload de uma imagem e nossa IA 
+ir√° fornecer uma descri√ß√£o detalhada e a narra√ß√£o em √°udio dessa descri√ß√£o.
+""")
+
+# Upload de Imagem
+uploaded_file = st.file_uploader("Escolha uma imagem...", type=["jpg", "jpeg", "png"])
+
+# L√≥gica de controle principal da UI baseada no estado do upload
+if uploaded_file:
+    handle_image_analysis(uploaded_file)
+else:
+    st.markdown("---")
+    st.subheader("Como funciona?")
+    st.markdown("""
+    1.  **Fa√ßa o Upload:** Clique em 'Browse files' e selecione uma imagem (JPG, JPEG, PNG).
+    2.  **An√°lise:** Ap√≥s o upload, clique no bot√£o "Analisar Imagem".
+    3.  **Resultados:** A descri√ß√£o da imagem e um player de √°udio aparecer√£o abaixo.
+    """)
+    st.markdown("---")
+
+# Rodap√© (opcional)
+st.markdown("---")
+st.markdown("Desenvolvido com Streamlit e Google Gemini.")
